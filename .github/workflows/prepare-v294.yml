@@ -34,7 +34,7 @@ jobs:
           python -m pip install playwright
           python -m playwright install chromium
           python -m http.server 8793 --directory preview >/tmp/preview.log 2>&1 &
-          python check-release.py
+          python -u check-release.py
       - name: Publish verified package
         env:
           GH_TOKEN: ${{ github.token }}
