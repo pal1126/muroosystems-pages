@@ -1,0 +1,36 @@
+name: Publish Muroosystems website
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Retrieve verified static website
+        run: |
+          curl --fail --location --retry 3 --output website.zip https://github.com/pal1126/muroosystems-pages/releases/download/v292/website.zip
+          echo '6241ae0aea1e3a0e0fe8ee9ab08643e0654d1c3471172a8e3e8512a6cfe82267  website.zip' | sha256sum --check
+          unzip -q website.zip -d public
+          test -s public/ja/index.html && test -s public/en/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
