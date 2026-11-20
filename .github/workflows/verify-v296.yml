@@ -1,0 +1,77 @@
+name: Verify bilingual search pagination
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/verify-v296.yml]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v295 --pattern website.zip
+          echo '2bb04bb58d1f7537538728a76c8c894c86168a621f693dbe4ae89a230c451431  website.zip' | sha256sum -c
+          mkdir -p preview/muroosystems-pages
+          unzip -q website.zip -d preview/muroosystems-pages
+          cp assets/site-search.js assets/site-search-en.js preview/muroosystems-pages/assets/
+          cd preview/muroosystems-pages
+          sha256sum -c <<'SUMS'
+          f2f13b387a1fbb490831230521df0c6daa873b6eb06a4066d8227bfd7a89a7aa  assets/site-search-en.js
+          ce403dfc3f2f0abafe30757eeaf07279f2981f0562f39ea8cfe1e6423bfa4aed  assets/site-search.js
+          SUMS
+      - name: Exercise mobile, tablet and desktop journeys
+        run: |
+          python -m pip install playwright
+          python -m playwright install chromium
+          python -m http.server 8793 --directory preview >/tmp/case-preview.log 2>&1 &
+          python - <<'PY'
+          from playwright.sync_api import sync_playwright, expect
+          with sync_playwright() as pw:
+              browser = pw.chromium.launch()
+              for width in (390, 768, 1440):
+                  for source, target in [('ja','en'), ('en','ja')]:
+                      tab = browser.new_page(viewport={'width':width,'height':900})
+                      url = f'http://localhost:8793/muroosystems-pages/{source}/search/'
+                      tab.goto(url+'?category=news')
+                      results = tab.locator('#site-search-results li')
+                      expect(results).to_have_count(12)
+                      tab.evaluate("document.querySelector('#site-search-results li').dataset.original='yes'")
+                      tab.locator('#site-search-more').click()
+                      expect(results).to_have_count(24)
+                      assert results.first.get_attribute('data-original') == 'yes'
+                      expect(results.nth(12).locator('a')).to_be_focused()
+                      tab.locator('#site-search-more').click()
+                      expect(results).to_have_count(36)
+                      tab.reload()
+                      expect(results).to_have_count(36)
+                      results.nth(29).locator('a').click()
+                      tab.go_back()
+                      expect(results).to_have_count(36)
+                      tab.locator(f'footer a[hreflang="{target}"]').click()
+                      expect(results).to_have_count(36)
+                      expect(tab.locator('#site-category')).to_have_value('news')
+                      tab.locator('#site-query').fill('NUKEM')
+                      tab.wait_for_function("new URL(location.href).searchParams.get('q')==='NUKEM' && !new URL(location.href).searchParams.has('page')")
+                      assert results.count() <= 12
+                      tab.locator('#site-reset').click()
+                      expect(results).to_have_count(12)
+                      tab.goto(url+'?category=company&page=999999999')
+                      tab.wait_for_selector('#site-search-results li')
+                      expect(tab.locator('#site-search-more')).to_be_hidden()
+                      assert '999999999' not in tab.url
+                      assert tab.evaluate('document.documentElement.scrollWidth<=innerWidth')
+                      print(width,source,target,'passed',flush=True)
+                      tab.close()
+          PY
+      - name: Publish verified website archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm website.zip
+          (cd preview/muroosystems-pages && zip -qr ../../website.zip .)
+          gh release create v296 website.zip --target "$GITHUB_SHA" --title "Muroosystems corporate website · v296" --notes "Search results retain the expanded list when revisiting, sharing or switching languages."
