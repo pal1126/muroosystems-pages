@@ -21,12 +21,22 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
       - name: Retrieve verified static website
         run: |
           curl --fail --location --retry 3 --output website.zip https://github.com/pal1126/muroosystems-pages/releases/download/v296/website.zip
           echo '1f368fcc439bd548e84c513dc358996daddb9a030ef595ef032bbfb01fc42145  website.zip' | sha256sum --check
           unzip -q website.zip -d public
           test -s public/ja/index.html && test -s public/en/index.html
+      - name: Apply and test bilingual search
+        run: |
+          cp assets/site-search{,-en}.js public/assets/
+          mkdir -p "$RUNNER_TEMP/preview"
+          ln -s "$GITHUB_WORKSPACE/public" "$RUNNER_TEMP/preview/muroosystems-pages"
+          python -m http.server 8123 --directory "$RUNNER_TEMP/preview" > "$RUNNER_TEMP/preview.log" 2>&1 &
+          npm install --prefix "$RUNNER_TEMP/search-qa" playwright@1.56.1
+          cp qa/search-recovery.cjs "$RUNNER_TEMP/search-qa/"
+          node "$RUNNER_TEMP/search-qa/search-recovery.cjs"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
