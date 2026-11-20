@@ -23,8 +23,8 @@ jobs:
     steps:
       - name: Retrieve verified static website
         run: |
-          curl --fail --location --retry 3 --output website.zip https://github.com/pal1126/muroosystems-pages/releases/download/v292/website.zip
-          echo '6241ae0aea1e3a0e0fe8ee9ab08643e0654d1c3471172a8e3e8512a6cfe82267  website.zip' | sha256sum --check
+          curl --fail --location --retry 3 --output website.zip https://github.com/pal1126/muroosystems-pages/releases/download/v293/website.zip
+          echo '7738a2a6982c3eac644604e4b1377e3d0681f7dcc588fa874d36461a4ee70241  website.zip' | sha256sum --check
           unzip -q website.zip -d public
           test -s public/ja/index.html && test -s public/en/index.html
       - uses: actions/configure-pages@v5
