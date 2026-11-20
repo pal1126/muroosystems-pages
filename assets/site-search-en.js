@@ -116,6 +116,24 @@ function applyFilters(push) {
   persist(push);
   filter();
 }
+function focusVisitedResult() {
+  const href = history.state?.visitedSearchResult;
+  if (!href || !index) return;
+  const link = Array.from(results.querySelectorAll('h2 a')).find(item => item.href === href);
+  if (link) {
+    link.focus({preventScroll: true});
+    link.scrollIntoView({block: 'nearest', behavior: 'instant'});
+  }
+}
+results.addEventListener('click', event => {
+  const link = event.target.closest('h2 a');
+  if (!link || event.defaultPrevented || event.button !== 0 ||
+      event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  history.replaceState({...history.state, visitedSearchResult: link.href}, '');
+});
+window.addEventListener('pageshow', event => {
+  if (event.persisted) focusVisitedResult();
+});
 async function load() {
   status.textContent='Preparing search…';retry.hidden=true;empty.hidden=true;
   try {
@@ -124,6 +142,7 @@ async function load() {
     const rows=await response.json();
     if (!Array.isArray(rows)) throw new Error('Invalid index');
     index=prepareIndex(rows);filter();
+    if (performance.getEntriesByType('navigation')[0]?.type === 'back_forward') focusVisitedResult();
   } catch {
     status.textContent='Search could not be loaded. Reload or browse the page list below.';retry.hidden=false;
   }
@@ -168,5 +187,5 @@ more.addEventListener('click',()=>{
   results.children[prior]?.querySelector('a')?.focus();
 });
 retry.addEventListener('click',load);
-window.addEventListener('popstate',()=>{clearTimeout(timer);restore();filter();});
+window.addEventListener('popstate',()=>{clearTimeout(timer);restore();filter();focusVisitedResult();});
 restore();load();
