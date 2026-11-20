@@ -2,7 +2,10 @@ name: Publish Muroosystems website
 on:
   push:
     branches: [main]
-    paths: [.github/workflows/pages.yml]
+    paths:
+      - .github/workflows/pages.yml
+      - assets/site-search*.js
+      - qa/search-recovery.cjs
   workflow_dispatch:
 
 permissions:

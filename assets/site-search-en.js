@@ -12,7 +12,13 @@ const labels = {business:'Business & Technology',products:'Products & services',
 const pageSize = 12;
 let index = null, matches = [], page = 1, timer;
 
+let compositionBase = null;
+function searchText() {
+  return compositionBase ?? query.value;
+}
+
 function restore() {
+  compositionBase = null;
   const params = new URLSearchParams(location.search);
   const requested = Number(params.get('page'));
   page = Number.isSafeInteger(requested) && requested > 0 ? requested : 1;
@@ -22,7 +28,7 @@ function restore() {
   syncLanguageLinks();
 }
 function writeState(url) {
-  for (const [key, value] of [['q', query.value.trim()], ['category', category.value], ['page', page > 1 ? String(page) : '']]) {
+  for (const [key, value] of [['q', searchText().trim()], ['category', category.value], ['page', page > 1 ? String(page) : '']]) {
     if (value) url.searchParams.set(key, value);
     else url.searchParams.delete(key);
   }
@@ -43,7 +49,7 @@ function persist(push = false) {
   if (destination !== location.pathname + location.search) history[push ? 'pushState' : 'replaceState'](null,'',destination);
 }
 function snippet(row) {
-  const terms = normalize(query.value).split(' ').filter(Boolean);
+  const terms = normalize(searchText()).split(' ').filter(Boolean);
   if (!terms.length || terms.some(term => normalize([row.title,row.aliases,row.description].join(' ')).includes(term))) return row.description;
   const folded = normalize(row.body);
   const positions = terms.map(term => folded.indexOf(term)).filter(position => position >= 0);
@@ -82,7 +88,7 @@ empty.querySelector('a').before(recoveryRow);
 
 function updateRecovery() {
   if (matches.length) return;
-  const count = category.value ? searchIndex(index, query.value).length : 0;
+  const count = category.value ? searchIndex(index, searchText()).length : 0;
   recovery.dataset.action = count ? 'broaden' : 'edit';
   recovery.textContent = count ? `Show matches in all categories (${count})` : 'Edit keyword';
 }
@@ -99,7 +105,7 @@ recovery.addEventListener('click', () => {
 
 function filter() {
   if (!index) return;
-  matches = searchIndex(index,query.value,category.value);
+  matches = searchIndex(index, searchText(),category.value);
   page = Math.min(page, Math.max(1, Math.ceil(matches.length / pageSize)));
   updateRecovery();
   render();
@@ -122,8 +128,33 @@ async function load() {
     status.textContent='Search could not be loaded. Reload or browse the page list below.';retry.hidden=false;
   }
 }
-form.addEventListener('submit',event=>{event.preventDefault();clearTimeout(timer);applyFilters(true);});
-query.addEventListener('input',()=>{page=1;syncLanguageLinks();clearTimeout(timer);timer=setTimeout(()=>{timer=undefined;applyFilters(false);},160);});
+function scheduleSearch() {
+  page = 1;
+  syncLanguageLinks();
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    timer = undefined;
+    applyFilters(false);
+  }, 160);
+}
+query.addEventListener('compositionstart', () => {
+  compositionBase = query.value;
+  clearTimeout(timer);
+  timer = undefined;
+});
+query.addEventListener('compositionend', () => {
+  compositionBase = null;
+  scheduleSearch();
+});
+query.addEventListener('input', event => {
+  if (compositionBase === null && !event.isComposing) scheduleSearch();
+});
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  if (compositionBase !== null) return;
+  clearTimeout(timer);
+  applyFilters(true);
+});
 category.addEventListener('change',()=>{clearTimeout(timer);applyFilters(true);});
 document.getElementById('site-reset').addEventListener('click',()=>{clearTimeout(timer);query.value='';category.value='';applyFilters(true);query.focus();});
 document.querySelectorAll('[data-query]').forEach(button=>button.addEventListener('click',()=>{clearTimeout(timer);query.value=button.dataset.query;category.value='';applyFilters(true);query.focus();}));
