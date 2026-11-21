@@ -10,6 +10,7 @@ assets = ["site.js", "search-engine.js", "search-excerpts.js", "site-search.js",
           "site-search-en.js", "site-search-ja.json", "site-search-en.json"]
 routes = [f"{lang}/{page}" for lang in ("ja", "en")
           for page in ("", "business/", "company/", "projects/", "contact/", "search/")]
+routes.append("")
 routes.extend("assets/" + name for name in assets)
 for route in routes:
     path = Path("public", route)

@@ -5,6 +5,13 @@ const { chromium } = require('playwright');
   try {
     for (const width of [390, 768, 1440]) {
       const plain = await browser.newPage({javaScriptEnabled: false, viewport: {width, height: 900}});
+      await plain.goto('http://localhost:8123/muroosystems-pages/');
+      const english = plain.locator('.hf-hero-actions a[hreflang="en"]');
+      assert.ok(await english.isVisible());
+      await english.focus();
+      await plain.keyboard.press('Enter');
+      await plain.waitForURL('http://localhost:8123/muroosystems-pages/en/');
+      assert.equal(await plain.locator('html').getAttribute('lang'), 'en');
       for (const lang of ['ja', 'en']) {
         const base = 'http://localhost:8123/muroosystems-pages/';
         const other = lang === 'ja' ? 'en' : 'ja';
