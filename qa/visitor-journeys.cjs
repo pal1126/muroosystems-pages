@@ -6,7 +6,8 @@ const { chromium } = require('playwright');
     for (const width of [390, 768, 1440]) {
       const plain = await browser.newPage({javaScriptEnabled: false, viewport: {width, height: 900}});
       await plain.goto('http://localhost:8123/muroosystems-pages/');
-      const english = plain.locator('.hf-hero-actions a[hreflang="en"]');
+      assert.equal(await plain.locator('.hf-hero-actions a[hreflang]').count(), 0);
+      const english = plain.locator('footer a[hreflang="en"]');
       assert.ok(await english.isVisible());
       await english.focus();
       await plain.keyboard.press('Enter');

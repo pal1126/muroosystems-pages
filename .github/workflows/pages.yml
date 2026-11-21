@@ -48,14 +48,7 @@ jobs:
           python qa/prepare_print.py public https://pal1126.github.io/muroosystems-pages
           python -m pip install Pillow==13.0.0
           python qa/responsive_hero.py public
-          python - <<'PY'
-          from pathlib import Path
-          home = Path("public/ja/index.html").read_text()
-          actions = '<div class="hf-hero-actions">'
-          assert home.count(actions) == 1
-          link = '<a lang="en" hreflang="en" href="/muroosystems-pages/en/">English homepage</a>'
-          Path("public/index.html").write_text(home.replace(actions, actions + link, 1))
-          PY
+          cp public/ja/index.html public/index.html
           find public -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/release.sha256"
       - name: Validate final package and browser journeys
         run: |
