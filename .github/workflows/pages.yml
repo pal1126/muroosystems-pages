@@ -56,3 +56,37 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: pages-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Verify live nested 404 and recovery destinations
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import os
+          import time
+          from pathlib import Path
+          from urllib.error import HTTPError, URLError
+          from urllib.request import urlopen
+
+          base = os.environ["SITE_URL"].rstrip("/")
+          url = f"{base}/missing/visitor-check/{os.environ['GITHUB_RUN_ID']}/"
+          expected = Path("public/404.html").read_bytes()
+          for attempt in range(12):
+              try:
+                  with urlopen(url, timeout=15) as response:
+                      print("Unexpected HTTP status", response.status)
+              except HTTPError as error:
+                  if error.code == 404 and error.read() == expected:
+                      print("Live nested URL returned HTTP 404 with the deployed bilingual page")
+                      break
+              except URLError as error:
+                  print(error.reason)
+              if attempt < 11:
+                  time.sleep(5)
+          else:
+              raise SystemExit("Live bilingual 404 verification failed")
+          for route in ("ja/", "ja/search/", "en/", "en/search/"):
+              with urlopen(f"{base}/{route}", timeout=20) as response:
+                  print(route, response.status)
+                  if response.status != 200:
+                      raise SystemExit("Recovery destination unavailable")
+          PY
