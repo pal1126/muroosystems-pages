@@ -125,15 +125,12 @@ jobs:
               links = entry.findall("{http://www.w3.org/1999/xhtml}link")
               assert {link.get("hreflang") for link in links} == {"ja", "en", "x-default"}
           print("Live sitemap language clusters verified:", len(entries))
-          for route in ("ja/", "ja/search/", "en/", "en/search/"):
-              with urlopen(f"{base}/{route}?revision={os.environ['GITHUB_SHA']}", timeout=20) as response:
-                  print(route, response.status)
-                  if route.endswith("/search/"):
-                      assert response.read() == (Path("public") / route / "index.html").read_bytes()
-                  if response.status != 200:
-                      raise SystemExit("Recovery destination unavailable")
           PY
       - name: Verify published bilingual homepage images
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
         run: python qa/live-home-images.py
+      - name: Verify published visitor pages and search assets
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python qa/live-visitor-files.py
