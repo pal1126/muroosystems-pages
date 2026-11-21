@@ -34,6 +34,25 @@ const { chromium } = require('playwright');
         const phone = plain.locator('.unified-contact a[href^="tel:"]');
         assert.ok(await phone.isVisible());
         assert.equal(await phone.getAttribute('href'), 'tel:+81368920550');
+        const root = base + lang + '/';
+        await plain.goto(base + '404.html');
+        const searchPath = new URL('search/', root).pathname;
+        await plain.locator('section[lang="' + lang + '"] a[href="' + searchPath + '"]').click();
+        await plain.waitForURL(root + 'search/');
+        for (const selector of ['#site-search-form', '.search-suggestions', '#site-search-status']) {
+          assert.ok(await plain.locator(selector).isHidden(), selector);
+        }
+        for (const route of ['company/', 'projects/', 'contact/']) {
+          const path = new URL(route, root).pathname;
+          const link = plain.locator('.search-directory a[href="' + path + '"]');
+          assert.ok(await link.isVisible());
+          await link.focus();
+          await plain.keyboard.press('Enter');
+          await plain.waitForURL(root + route);
+          assert.equal(await plain.locator('html').getAttribute('lang'), lang);
+          assert.ok(await plain.locator('h1').first().isVisible());
+          await plain.goBack();
+        }
         console.log('No-script visitor journey passed', lang, width);
       }
       await plain.close();

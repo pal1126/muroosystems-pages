@@ -41,6 +41,7 @@ jobs:
           cp 404.html public/404.html
           cp assets/search-engine.js assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
           python qa/prepare_redirects.py public
+          python qa/search_directory.py public
           python qa/update-contact.py
           python qa/section_links.py public
           python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
@@ -125,8 +126,10 @@ jobs:
               assert {link.get("hreflang") for link in links} == {"ja", "en", "x-default"}
           print("Live sitemap language clusters verified:", len(entries))
           for route in ("ja/", "ja/search/", "en/", "en/search/"):
-              with urlopen(f"{base}/{route}", timeout=20) as response:
+              with urlopen(f"{base}/{route}?revision={os.environ['GITHUB_SHA']}", timeout=20) as response:
                   print(route, response.status)
+                  if route.endswith("/search/"):
+                      assert response.read() == (Path("public") / route / "index.html").read_bytes()
                   if response.status != 200:
                       raise SystemExit("Recovery destination unavailable")
           PY
