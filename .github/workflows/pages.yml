@@ -47,7 +47,11 @@ jobs:
           python qa/update-contact.py
           python qa/section_links.py public
           python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
+          python qa/prepare_print.py public https://pal1126.github.io/muroosystems-pages
           python qa/check-package.py
+          command -v pdftotext || sudo apt-get install -y poppler-utils
+          cp qa/print-pages.cjs "$RUNNER_TEMP/search-qa/"
+          node "$RUNNER_TEMP/search-qa/print-pages.cjs"
           cp qa/visitor-journeys.cjs "$RUNNER_TEMP/search-qa/"
           node "$RUNNER_TEMP/search-qa/visitor-journeys.cjs"
       - uses: actions/configure-pages@v5

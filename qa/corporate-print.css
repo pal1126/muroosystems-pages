@@ -1,0 +1,44 @@
+@page { size: A4; margin: 16mm 15mm 18mm; }
+
+.site-header, .framework-footer, main nav, .skip-link, .company-hero-cta {
+  display: none !important;
+}
+html, body, main {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: white !important;
+}
+main[data-print-url] { font-size: 10.5pt; line-height: 1.45; }
+main[data-print-url]::before, main[data-print-url]::after {
+  display: block;
+  color: #263d45;
+  font: 10pt/1.4 sans-serif;
+}
+main[data-print-url]::before {
+  content: "Muroosystems Corporation";
+  border-bottom: 1pt solid #54747a;
+  padding-bottom: 2mm;
+}
+main[data-print-url]::after {
+  content: attr(data-print-url);
+  overflow-wrap: anywhere;
+  border-top: .5pt solid #54747a;
+  margin-top: 5mm;
+  padding-top: 2mm;
+}
+main .wrap, main section, main article {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+}
+main .wrap { margin-inline: 0 !important; padding-inline: 0 !important; }
+main section { padding-block: 4mm !important; }
+main h1, main h2, main h3 { break-after: avoid; }
+main p, main li { orphans: 3; widows: 3; }
+main table { width: 100%; }
+main thead { display: table-header-group; }
+main tr, main figure { break-inside: avoid; }
+main img { max-width: 100% !important; }
+main, main * { color: #182e35 !important; text-shadow: none !important; box-shadow: none !important; background-color: transparent !important; }
