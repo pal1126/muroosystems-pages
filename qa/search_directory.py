@@ -2,7 +2,7 @@
 from pathlib import Path
 import sys
 
-style = '<noscript><style>.search-workspace #site-search-form,.search-workspace .search-suggestions,.search-workspace #site-search-status,.search-workspace #site-search-results{display:none}</style></noscript>'
+style = '<noscript><style>.search-workspace #site-search-form,.search-workspace .search-suggestions,.search-workspace #site-search-status,.search-workspace #site-search-results{display:none!important}</style></noscript>'
 for language in ("ja", "en"):
     page = Path(sys.argv[1]) / language / "search" / "index.html"
     html = page.read_text(encoding="utf-8")
