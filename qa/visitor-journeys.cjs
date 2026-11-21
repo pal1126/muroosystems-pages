@@ -67,7 +67,7 @@ const { chromium } = require('playwright');
         await route.fulfill({status: 404, contentType: 'text/html', body: await response.body()});
       });
       for (const locale of ['ja', 'en']) {
-        for (const suffix of ['', 'search/']) {
+        for (const suffix of ['', 'search/', 'contact/']) {
           assert.equal((await page.goto(missing)).status(), 404);
           const target = '/muroosystems-pages/' + locale + '/' + suffix;
           const link = page.locator('section[lang="' + locale + '"] a[href="' + target + '"]');
@@ -77,7 +77,7 @@ const { chromium } = require('playwright');
           await page.keyboard.press('Enter');
           await page.waitForURL('http://localhost:8123' + target);
           assert.equal(await page.locator('html').getAttribute('lang'), locale);
-          assert.ok(await page.locator(suffix ? '#site-query' : 'h1').first().isVisible());
+          assert.ok(await page.locator(suffix === 'search/' ? '#site-query' : 'h1').first().isVisible());
         }
       }
       for (const lang of ['ja', 'en']) {
@@ -108,6 +108,11 @@ const { chromium } = require('playwright');
           await page.waitForURL(home + route);
           assert.equal(await page.locator('html').getAttribute('lang'), lang);
           assert.ok(await page.locator('h1').first().isVisible());
+          await page.goto(home + route);
+          await page.keyboard.press('Tab');
+          assert.equal(await page.locator(':focus').getAttribute('href'), '#main');
+          await page.keyboard.press('Enter');
+          assert.equal(await page.locator(':focus').getAttribute('id'), 'main');
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           assert.ok(overflow <= 1, lang + route + ' width=' + width + ' overflow=' + overflow);
           if (route === 'contact/') {
