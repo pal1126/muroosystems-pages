@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/pages.yml
       - assets/site-search*.js
+      - 404.html
       - qa/**
   workflow_dispatch:
 
@@ -33,6 +34,7 @@ jobs:
           test -s public/ja/index.html && test -s public/en/index.html
       - name: Apply and test bilingual search
         run: |
+          cp 404.html public/404.html
           cp assets/site-search{,-en}.js public/assets/
           mkdir -p "$RUNNER_TEMP/preview"
           ln -s "$GITHUB_WORKSPACE/public" "$RUNNER_TEMP/preview/muroosystems-pages"

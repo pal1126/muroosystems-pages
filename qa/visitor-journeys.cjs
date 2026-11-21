@@ -8,6 +8,26 @@ const { chromium } = require('playwright');
       page.setDefaultTimeout(10000);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      const missing = 'http://localhost:8123/muroosystems-pages/old/nested/article/';
+      await page.route(missing, async route => {
+        const response = await page.request.get('http://localhost:8123/muroosystems-pages/404.html');
+        assert.equal(response.status(), 200);
+        await route.fulfill({status: 404, contentType: 'text/html', body: await response.body()});
+      });
+      for (const locale of ['ja', 'en']) {
+        for (const suffix of ['', 'search/']) {
+          assert.equal((await page.goto(missing)).status(), 404);
+          const target = '/muroosystems-pages/' + locale + '/' + suffix;
+          const link = page.locator('section[lang="' + locale + '"] a[href="' + target + '"]');
+          assert.ok(await link.isVisible());
+          assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+          await link.focus();
+          await page.keyboard.press('Enter');
+          await page.waitForURL('http://localhost:8123' + target);
+          assert.equal(await page.locator('html').getAttribute('lang'), locale);
+          assert.ok(await page.locator(suffix ? '#site-query' : 'h1').first().isVisible());
+        }
+      }
       for (const lang of ['ja', 'en']) {
         const home = 'http://localhost:8123/muroosystems-pages/' + lang + '/';
         for (const route of ['business/', 'projects/', 'company/', 'contact/']) {
