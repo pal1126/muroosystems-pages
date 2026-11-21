@@ -21,6 +21,15 @@ const { chromium } = require('playwright');
           assert.ok(await page.locator('h1').first().isVisible());
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           assert.ok(overflow <= 1, lang + route + ' width=' + width + ' overflow=' + overflow);
+          if (route === 'contact/') {
+            const contact = page.locator('.unified-contact');
+            const call = contact.getByRole('link');
+            assert.equal(await call.getAttribute('href'), 'tel:+81368920550');
+            assert.match(await call.innerText(), lang === 'en' ? /\+81 3 6892 0550/ : /03-6892-0550/);
+            assert.match(await contact.innerText(), lang === 'en' ? /UTC\+9/ : /日本時間/);
+            await call.focus();
+            assert.ok(await call.evaluate(el => document.activeElement === el));
+          }
           const other = lang === 'ja' ? 'en' : 'ja';
           const alternate = page.locator('a[hreflang="' + other + '"]:visible').last();
           await alternate.click();
