@@ -30,6 +30,9 @@ const { chromium } = require('playwright');
       }
       for (const lang of ['ja', 'en']) {
         const home = 'http://localhost:8123/muroosystems-pages/' + lang + '/';
+        await page.goto(home + 'group/?source=bookmark');
+        await page.waitForURL(home + 'company/?source=bookmark#group');
+        assert.equal(await page.locator(':target').getAttribute('id'), 'group');
         for (const [route, section] of [['company/', 'nukem-technologies'], ['projects/', 'kazakhstan'], ['fremes/', 'function-development']]) {
           await page.goto(home + route + '#' + section);
           const other = lang === 'ja' ? 'en' : 'ja';
