@@ -89,6 +89,7 @@ const { chromium } = require('playwright');
           await page.goto(home + route + '#' + section);
           const other = lang === 'ja' ? 'en' : 'ja';
           const switcher = page.locator('a[hreflang="' + other + '"]:visible').last();
+          await page.waitForFunction(({lang, section}) => [...document.querySelectorAll('a[hreflang="' + lang + '"]')].some(link => link.hash === '#' + section), {lang: other, section});
           await switcher.focus();
           await switcher.press('Enter');
           await page.waitForURL(home.replace('/' + lang + '/', '/' + other + '/') + route + '#' + section);
