@@ -134,17 +134,30 @@ results.addEventListener('click', event => {
 window.addEventListener('pageshow', event => {
   if (event.persisted) focusVisitedResult();
 });
-async function load() {
-  status.textContent='検索を準備しています…';retry.hidden=true;empty.hidden=true;
+async function load(isRetry = false) {
+  if (results.getAttribute('aria-busy') === 'true') return;
+  results.setAttribute('aria-busy', 'true');
+  retry.setAttribute('aria-disabled', 'true');
+  more.hidden = true;
+  status.textContent='検索を準備しています…';retry.hidden = !isRetry;empty.hidden=true;
   try {
     const response=await fetch('/muroosystems-pages/assets/site-search-ja.json');
     if (!response.ok) throw new Error('Index unavailable');
     const rows=await response.json();
     if (!Array.isArray(rows)) throw new Error('Invalid index');
     index=prepareIndex(rows);filter();
-    if (performance.getEntriesByType('navigation')[0]?.type === 'back_forward') focusVisitedResult();
+    const continueFromRetry = isRetry && document.activeElement === retry;
+    retry.hidden = true;
+    if (continueFromRetry) {
+      (results.querySelector('h2 a') || recovery).focus();
+    } else if (!isRetry && performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
+      focusVisitedResult();
+    }
   } catch {
-    status.textContent='検索データを読み込めませんでした。再読み込みするか、下のページ一覧をご利用ください。';retry.hidden=false;
+    status.textContent='検索結果を読み込めませんでした。もう一度試すか、下のページ一覧からお探しください。';retry.hidden=false;
+  } finally {
+    results.removeAttribute('aria-busy');
+    retry.removeAttribute('aria-disabled');
   }
 }
 function scheduleSearch() {
@@ -186,6 +199,6 @@ more.addEventListener('click',()=>{
   render(prior);
   results.children[prior]?.querySelector('a')?.focus();
 });
-retry.addEventListener('click',load);
+retry.addEventListener('click', () => load(true));
 window.addEventListener('popstate',()=>{clearTimeout(timer);restore();filter();focusVisitedResult();});
 restore();load();

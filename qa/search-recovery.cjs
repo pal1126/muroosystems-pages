@@ -55,6 +55,27 @@ const { chromium } = require('playwright');
         assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= 901);
         await page.keyboard.press('Tab');
         assert.equal(await links.nth(30).evaluate(el => el === document.activeElement), true);
+        const indexRoute = '**/assets/site-search-' + lang + '.json';
+        let attempts = 0;
+        await page.route(indexRoute, async route => {
+          attempts++;
+          if (attempts <= 2) await route.fulfill({status: 503, body: ''});
+          else await route.continue();
+        });
+        await page.goto(url);
+        const retry = page.locator('#site-search-retry');
+        await retry.waitFor();
+        await retry.focus();
+        await retry.press('Enter');
+        await page.waitForFunction(() => !document.querySelector('#site-search-retry').hasAttribute('aria-disabled') && !document.querySelector('#site-search-retry').hidden);
+        assert.equal(await retry.evaluate(el => el === document.activeElement), true);
+        await retry.press('Enter');
+        await broaden.waitFor();
+        assert.equal(await broaden.evaluate(el => el === document.activeElement), true);
+        assert.equal(await query.inputValue(), 'FREMES');
+        assert.equal(await page.locator('#site-category').inputValue(), 'products');
+        assert.equal(attempts, 3);
+        await page.unroute(indexRoute);
         console.log(lang, width, 'passed');
       }
       await page.close();
