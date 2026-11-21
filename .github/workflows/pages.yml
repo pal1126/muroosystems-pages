@@ -46,6 +46,7 @@ jobs:
           node "$RUNNER_TEMP/search-qa/search-recovery.cjs"
           python qa/update-contact.py
           python qa/section_links.py public
+          python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
           python qa/check-package.py
           cp qa/visitor-journeys.cjs "$RUNNER_TEMP/search-qa/"
           node "$RUNNER_TEMP/search-qa/visitor-journeys.cjs"
@@ -99,6 +100,15 @@ jobs:
                   time.sleep(5)
           else:
               raise SystemExit("Live bilingual 404 verification failed")
+          from xml.etree import ElementTree as ET
+          with urlopen(f"{base}/sitemap.xml?revision={os.environ['GITHUB_SHA']}", timeout=20) as response:
+              tree = ET.parse(response)
+          entries = tree.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url")
+          assert entries
+          for entry in entries:
+              links = entry.findall("{http://www.w3.org/1999/xhtml}link")
+              assert {link.get("hreflang") for link in links} == {"ja", "en", "x-default"}
+          print("Live sitemap language clusters verified:", len(entries))
           for route in ("ja/", "ja/search/", "en/", "en/search/"):
               with urlopen(f"{base}/{route}", timeout=20) as response:
                   print(route, response.status)
