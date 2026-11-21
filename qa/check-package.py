@@ -42,6 +42,6 @@ for file in pages:
             target /= "index.html"
         if not url.path.startswith(prefix) or not target.is_file():
             errors.append(f"{rel} -> {ref}")
-print(json.dumps(dict(html=len(pages), redirects=redirects, language_pairs=pairs, references=checked, errors=errors[:30]), flush=True))
+print(json.dumps(dict(html=len(pages), redirects=redirects, language_pairs=pairs, references=checked, errors=errors[:30])), flush=True)
 if errors:
     raise SystemExit(1)
