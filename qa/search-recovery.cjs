@@ -135,6 +135,14 @@ const { chromium } = require('playwright');
         await links.first().click();
         await page.waitForURL('**/' + lang + '/company/#nukem-technologies');
         assert.equal(await page.locator('#nukem-technologies .entity-name').textContent(), fullName);
+        for (const legacy of ['ＮＴＥＳ', 'NUKEM Technologies Engineering Services GmbH (NTES)']) {
+          await page.goto(new URL('?q=' + encodeURIComponent(legacy), url).href);
+          const first = links.first();
+          await first.waitFor();
+          assert.equal(await first.textContent(), fullName);
+          await first.click();
+          await page.waitForURL('**/' + lang + '/company/#nukem-technologies');
+        }
         console.log(lang, width, 'passed');
       }
       await page.close();

@@ -7,8 +7,14 @@ export function prepareIndex(rows) {
   return rows.map(row => ({...row, fields: [row.title, row.aliases, row.description, row.body]
     .map(value => ({normal: normalize(value), compact: compact(value)}))}));
 }
+// Match complete company-name queries, including references from historical documents.
+const companyNames = new Set([
+  'nukem', 'nukemtechnologies', 'nukemtechnologiesgmbh', 'nukemtechnologiesgmbh(nukem)',
+  'ntes', 'nukemtechnologiesengineeringservicesgmbh', 'nukemtechnologiesengineeringservicesgmbh(ntes)',
+]);
+
 export function searchIndex(rows, query = '', category = '') {
-  const companyQuery = ['nukem', 'nukemtechnologies', 'nukemtechnologiesgmbh', 'nukemtechnologiesgmbh(nukem)'].includes(compact(query));
+  const companyQuery = companyNames.has(compact(query));
   const terms = normalize(query).split(' ').filter(Boolean).slice(0, 16);
   return rows.filter(row => !category || (category === 'prtimes' ? row.prtimes : row.category === category))
     .map(row => {
