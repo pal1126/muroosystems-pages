@@ -4,6 +4,26 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({channel: 'chrome'});
   try {
     for (const width of [390, 768, 1440]) {
+      const plain = await browser.newPage({javaScriptEnabled: false, viewport: {width, height: 900}});
+      for (const lang of ['ja', 'en']) {
+        const base = 'http://localhost:8123/muroosystems-pages/';
+        const other = lang === 'ja' ? 'en' : 'ja';
+        await plain.goto(base + lang + '/group/');
+        await plain.waitForURL(base + lang + '/company/#group');
+        assert.equal(await plain.locator(':target').getAttribute('id'), 'group');
+        const alternate = plain.locator('a[hreflang="' + other + '"]:visible').last();
+        await alternate.click();
+        await plain.waitForURL(base + other + '/company/');
+        const contact = plain.locator('a[href="/muroosystems-pages/' + other + '/contact/"]:visible').last();
+        await contact.focus();
+        await plain.keyboard.press('Enter');
+        await plain.waitForURL(base + other + '/contact/');
+        const phone = plain.locator('.unified-contact a[href^="tel:"]');
+        assert.ok(await phone.isVisible());
+        assert.equal(await phone.getAttribute('href'), 'tel:+81368920550');
+        console.log('No-script visitor journey passed', lang, width);
+      }
+      await plain.close();
       const page = await browser.newPage({viewport: {width, height: 900}});
       page.setDefaultTimeout(10000);
       const errors = [];
