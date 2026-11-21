@@ -6,6 +6,7 @@ on:
       - .github/workflows/pages.yml
       - assets/site-search*.js
       - 404.html
+      - assets/search-excerpts.js
       - qa/**
   workflow_dispatch:
 
@@ -36,7 +37,7 @@ jobs:
       - name: Apply and test bilingual search
         run: |
           cp 404.html public/404.html
-          cp assets/site-search{,-en}.js public/assets/
+          cp assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
           mkdir -p "$RUNNER_TEMP/preview"
           ln -s "$GITHUB_WORKSPACE/public" "$RUNNER_TEMP/preview/muroosystems-pages"
           python -m http.server 8123 --directory "$RUNNER_TEMP/preview" > "$RUNNER_TEMP/preview.log" 2>&1 &

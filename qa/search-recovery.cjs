@@ -117,6 +117,19 @@ const { chromium } = require('playwright');
         assert.ok(fieldBounds.y >= 0 && fieldBounds.y + fieldBounds.height <= 900);
         await query.fill('FREMES');
         await backToSearch.waitFor({state: 'hidden'});
+        const body = '㍿'.repeat(145) + '　'.repeat(4) + 'ｶﾞｽ設備に関する技術資料';
+        const fixture = {title:'NUKEM', description:'Company overview', aliases:'',
+          category:'company', body, route:'company', url:new URL('../company/', page.url()).href, date:''};
+        await page.route(indexRoute, route => route.fulfill({json:[fixture]}));
+        const mixed = new URL(url);
+        mixed.search = new URLSearchParams({q:'nukem がす'}).toString();
+        await page.goto(mixed.href);
+        const snippetMark = page.locator('.search-result-snippet mark');
+        await snippetMark.waitFor();
+        assert.equal(await snippetMark.innerText(), 'ｶﾞｽ');
+        assert.match(await page.locator('.search-result-snippet').innerText(), /ｶﾞｽ設備/);
+        assert.equal(await links.first().innerText(), 'NUKEM');
+        await page.unroute(indexRoute);
         console.log(lang, width, 'passed');
       }
       await page.close();

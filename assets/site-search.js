@@ -1,4 +1,5 @@
 import {prepareIndex, searchIndex, normalize} from './search-engine.js';
+import {excerpt, highlight} from './search-excerpts.js';
 
 const form = document.getElementById('site-search-form');
 const query = document.getElementById('site-query');
@@ -57,46 +58,19 @@ function persist(push = false) {
   const destination = url.pathname + url.search;
   if (destination !== location.pathname + location.search) history[push ? 'pushState' : 'replaceState'](null,'',destination);
 }
-function snippet(row) {
-  const terms = normalize(searchText()).split(' ').filter(Boolean);
-  if (!terms.length || terms.some(term => normalize([row.title,row.aliases,row.description].join(' ')).includes(term))) return row.description;
-  const folded = normalize(row.body);
-  const positions = terms.map(term => folded.indexOf(term)).filter(position => position >= 0);
-  if (!positions.length) return row.description;
-  const start = Math.max(0, Math.min(...positions)-35);
-  return (start ? '…' : '') + row.body.slice(start, start+150) + (row.body.length > start+150 ? '…' : '');
-}
 function element(tag, text, className) {
   const node = document.createElement(tag);
   if (text) node.textContent=text;
   if (className) node.className=className;
   return node;
 }
-function foldAsciiWidth(value) {
-  return value.replace(/[！-～]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xfee0));
-}
-
-function highlightMatches(node, pattern) {
-  if (!pattern) return;
-  const original = node.textContent;
-  const parts = document.createDocumentFragment();
-  let offset = 0;
-  for (const match of foldAsciiWidth(original).matchAll(pattern)) {
-    parts.append(original.slice(offset, match.index), element('mark', original.slice(match.index, match.index + match[0].length)));
-    offset = match.index + match[0].length;
-  }
-  if (offset) {
-    parts.append(original.slice(offset));
-    node.replaceChildren(parts);
-  }
-}
-
 function render(start = 0) {
   if (!index) return;
-  const terms = foldAsciiWidth(searchText()).trim().split(/\s+/).filter(Boolean).slice(0, 16)
+  const terms = normalize(searchText()).split(' ').filter(Boolean).slice(0, 16);
+  const escaped = terms.slice()
     .sort((a, b) => b.length - a.length)
     .map(term => term.replace(/[.*+?^$(){}|[\]\\]/g, char => '\\' + char));
-  const pattern = terms.length ? new RegExp(terms.join('|'), 'giu') : null;
+  const pattern = terms.length ? new RegExp(escaped.join('|'), 'gu') : null;
   const limit = page * pageSize;
   const fragment = document.createDocumentFragment();
   for (const row of matches.slice(start,limit)) {
@@ -104,9 +78,9 @@ function render(start = 0) {
     const meta=element('p',labels[row.category] + (row.prtimes ? ' · PR TIMES' : ''),'search-result-meta');
     if (row.date) {const time=element('time',row.date.slice(0,10));time.dateTime=row.date;meta.append(' · ',time);}
     const heading=element('h2'); const anchor=element('a',row.title);anchor.href=row.url;heading.append(anchor);
-    const summary = element('p', snippet(row), 'search-result-snippet');
-    highlightMatches(anchor, pattern);
-    highlightMatches(summary, pattern);
+    const summary = element('p', excerpt(row, terms), 'search-result-snippet');
+    highlight(anchor, pattern);
+    highlight(summary, pattern);
     item.append(meta, heading, summary);
     fragment.append(item);
   }
