@@ -48,6 +48,10 @@ jobs:
           python qa/section_links.py public
           python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
           python qa/prepare_print.py public https://pal1126.github.io/muroosystems-pages
+          python -m pip install Pillow==13.0.0
+          python qa/responsive_hero.py public
+          cp qa/home-hero.cjs "$RUNNER_TEMP/search-qa/"
+          node "$RUNNER_TEMP/search-qa/home-hero.cjs"
           python qa/check-package.py
           command -v pdftotext || sudo apt-get install -y poppler-utils
           cp qa/print-pages.cjs "$RUNNER_TEMP/search-qa/"
