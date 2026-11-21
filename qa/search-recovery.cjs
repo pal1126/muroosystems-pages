@@ -105,6 +105,18 @@ const { chromium } = require('playwright');
           assert.equal(await links.count(), shown);
         }
         assert.equal(await showMore.isHidden(), true);
+        const backToSearch = page.locator('#site-search-return');
+        const expandedURL = page.url();
+        await backToSearch.focus();
+        await backToSearch.press('Enter');
+        assert.equal(await query.evaluate(el => el === document.activeElement), true);
+        assert.equal(page.url(), expandedURL);
+        assert.equal(await links.count(), totalNews);
+        assert.equal(await page.locator('#site-category').inputValue(), 'news');
+        const fieldBounds = await query.boundingBox();
+        assert.ok(fieldBounds.y >= 0 && fieldBounds.y + fieldBounds.height <= 900);
+        await query.fill('FREMES');
+        await backToSearch.waitFor({state: 'hidden'});
         console.log(lang, width, 'passed');
       }
       await page.close();

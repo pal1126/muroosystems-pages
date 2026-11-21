@@ -9,6 +9,15 @@ const empty = document.getElementById('site-search-empty');
 const more = document.getElementById('site-search-more');
 const retry = document.getElementById('site-search-retry');
 const labels = {business:'事業・技術',products:'製品・サービス',projects:'プロジェクト',company:'会社・採用',news:'ニュース'};
+const returnToSearch = element('button', '検索欄に戻る');
+returnToSearch.type = 'button';
+returnToSearch.id = 'site-search-return';
+returnToSearch.hidden = true;
+more.after(returnToSearch);
+returnToSearch.addEventListener('click', () => {
+  query.focus({preventScroll: true});
+  query.scrollIntoView({block: 'center', behavior: 'instant'});
+});
 const pageSize = 12;
 let index = null, matches = [], page = 1, timer;
 
@@ -105,6 +114,7 @@ function render(start = 0) {
   else results.replaceChildren(fragment);
   empty.hidden=matches.length>0;
   const remaining = Math.max(0, matches.length - limit);
+  returnToSearch.hidden = results.children.length <= pageSize;
   more.hidden = remaining === 0;
   if (remaining) {
     const nextCount = Math.min(pageSize, remaining);

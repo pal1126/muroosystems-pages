@@ -9,6 +9,15 @@ const empty = document.getElementById('site-search-empty');
 const more = document.getElementById('site-search-more');
 const retry = document.getElementById('site-search-retry');
 const labels = {business:'Business & Technology',products:'Products & services',projects:'Projects',company:'Company & careers',news:'News'};
+const returnToSearch = element('button', 'Back to search field');
+returnToSearch.type = 'button';
+returnToSearch.id = 'site-search-return';
+returnToSearch.hidden = true;
+more.after(returnToSearch);
+returnToSearch.addEventListener('click', () => {
+  query.focus({preventScroll: true});
+  query.scrollIntoView({block: 'center', behavior: 'instant'});
+});
 const pageSize = 12;
 let index = null, matches = [], page = 1, timer;
 
@@ -105,6 +114,7 @@ function render(start = 0) {
   else results.replaceChildren(fragment);
   empty.hidden=matches.length>0;
   const remaining = Math.max(0, matches.length - limit);
+  returnToSearch.hidden = results.children.length <= pageSize;
   more.hidden = remaining === 0;
   if (remaining) {
     const nextCount = Math.min(pageSize, remaining);
