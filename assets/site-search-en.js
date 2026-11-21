@@ -43,7 +43,39 @@ function writeState(url) {
     else url.searchParams.delete(key);
   }
 }
+const share = element('button', 'Copy search link');
+share.type = 'button';
+share.id = 'site-search-share';
+const shareStatus = element('span');
+shareStatus.setAttribute('role', 'status');
+const shareField = element('input');
+shareField.type = 'url';
+shareField.readOnly = true;
+shareField.hidden = true;
+shareField.setAttribute('aria-label', 'Search link');
+form.querySelector('.site-search-tools').append(share, shareStatus, shareField);
+
+function clearShareFeedback() {
+  shareStatus.textContent = '';
+  shareField.hidden = true;
+}
+share.addEventListener('click', async () => {
+  clearShareFeedback();
+  const url = new URL(location.pathname, location.origin);
+  writeState(url);
+  try {
+    await navigator.clipboard.writeText(url.href);
+    shareStatus.textContent = 'Link copied.';
+  } catch {
+    shareStatus.textContent = 'Copy the selected link.';
+    shareField.value = url.href;
+    shareField.hidden = false;
+    shareField.focus();
+    shareField.select();
+  }
+});
 function syncLanguageLinks() {
+  clearShareFeedback();
   for (const link of document.querySelectorAll('a[hreflang]')) {
     const destination = new URL(link.href);
     if (destination.origin !== location.origin) continue;

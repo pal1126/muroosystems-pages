@@ -44,6 +44,25 @@ const { chromium } = require('playwright');
         const expanded = new URL(url);
         expanded.search = '?category=news&page=3';
         await page.goto(expanded.href);
+        await links.nth(29).waitFor();
+        const share = page.locator('#site-search-share');
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {
+          configurable: true, value: {writeText: async value => { window.copiedSearch = value; }}
+        }));
+        await share.click();
+        assert.equal(await page.evaluate(() => window.copiedSearch), expanded.href);
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {configurable:true, value:undefined}));
+        await share.click();
+        const selected = page.locator('.site-search-tools input[readonly]');
+        assert.equal(await selected.inputValue(), expanded.href);
+        assert.ok(await selected.evaluate(el => el === document.activeElement && el.selectionEnd === el.value.length));
+        const other = lang === 'ja' ? 'en' : 'ja';
+        const alternate = page.locator('a[hreflang="' + other + '"]:visible').last();
+        await alternate.click();
+        await links.nth(29).waitFor();
+        assert.equal(new URL(page.url()).search, expanded.search);
+        assert.equal(await page.locator('html').getAttribute('lang'), other);
+        await page.goto(expanded.href);
         const article = links.nth(29);
         await article.waitFor();
         const destination = await article.evaluate(el => el.href);
