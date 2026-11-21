@@ -40,6 +40,7 @@ jobs:
           python qa/profile_name.py public
           cp 404.html public/404.html
           cp assets/search-engine.js assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
+          python qa/prepare_redirects.py public
           python qa/update-contact.py
           python qa/section_links.py public
           python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
