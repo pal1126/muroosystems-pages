@@ -30,6 +30,20 @@ const { chromium } = require('playwright');
       }
       for (const lang of ['ja', 'en']) {
         const home = 'http://localhost:8123/muroosystems-pages/' + lang + '/';
+        for (const [route, section] of [['company/', 'nukem-technologies'], ['projects/', 'kazakhstan'], ['fremes/', 'function-development']]) {
+          await page.goto(home + route + '#' + section);
+          const other = lang === 'ja' ? 'en' : 'ja';
+          const switcher = page.locator('a[hreflang="' + other + '"]:visible').last();
+          await switcher.focus();
+          await switcher.press('Enter');
+          await page.waitForURL(home.replace('/' + lang + '/', '/' + other + '/') + route + '#' + section);
+          assert.equal(await page.locator(':target').getAttribute('id'), section);
+          const back = page.locator('a[hreflang="' + lang + '"]:visible').last();
+          await page.evaluate(() => { location.hash = 'unmapped-section'; });
+          await page.waitForFunction(lang => [...document.querySelectorAll('a[hreflang="' + lang + '"]')].every(a => !a.hash), lang);
+          await back.click();
+          await page.waitForURL(home + route);
+        }
         for (const route of ['business/', 'projects/', 'company/', 'contact/']) {
           console.log('Checking', lang, route, width);
           await page.goto(home);

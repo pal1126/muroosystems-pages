@@ -45,6 +45,7 @@ jobs:
           cp qa/search-recovery.cjs "$RUNNER_TEMP/search-qa/"
           node "$RUNNER_TEMP/search-qa/search-recovery.cjs"
           python qa/update-contact.py
+          python qa/section_links.py public
           python qa/check-package.py
           cp qa/visitor-journeys.cjs "$RUNNER_TEMP/search-qa/"
           node "$RUNNER_TEMP/search-qa/visitor-journeys.cjs"
