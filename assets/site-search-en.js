@@ -113,9 +113,8 @@ const recoveryRow = element('p');
 recoveryRow.append(recovery);
 empty.querySelector('a').before(recoveryRow);
 
-function updateRecovery() {
+function updateRecovery(count) {
   if (matches.length) return;
-  const count = category.value ? searchIndex(index, searchText()).length : 0;
   recovery.dataset.action = count ? 'broaden' : 'edit';
   recovery.textContent = count ? `Show matches in all categories (${count})` : 'Edit keyword';
 }
@@ -132,9 +131,16 @@ recovery.addEventListener('click', () => {
 
 function filter() {
   if (!index) return;
-  matches = searchIndex(index, searchText(),category.value);
+  const allMatches = searchIndex(index, searchText());
+  const inCategory = (row, value) => value === 'prtimes' ? row.prtimes : row.category === value;
+  for (const option of category.options) {
+    option.dataset.label ??= option.textContent;
+    const count = option.value ? allMatches.filter(row => inCategory(row, option.value)).length : allMatches.length;
+    option.textContent = option.dataset.label + ' (' + count + ')';
+  }
+  matches = category.value ? allMatches.filter(row => inCategory(row, category.value)) : allMatches;
   page = Math.min(page, Math.max(1, Math.ceil(matches.length / pageSize)));
-  updateRecovery();
+  updateRecovery(allMatches.length);
   render();
   persist();
 }

@@ -10,6 +10,8 @@ const { chromium } = require('playwright');
         await page.goto(url);
         const broaden = page.locator('#site-search-empty button[data-action="broaden"]');
         await broaden.waitFor();
+        assert.match(await page.locator('#site-category option[value="products"]').textContent(), /\(0\)$/);
+        assert.match(await page.locator('#site-category option[value=""]').textContent(), /\(6\)$/);
         assert.match(await broaden.innerText(), /6/);
         await broaden.click();
         const links = page.locator('#site-search-results h2 a');
