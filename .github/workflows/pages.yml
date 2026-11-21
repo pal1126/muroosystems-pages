@@ -35,33 +35,36 @@ jobs:
           echo '1f368fcc439bd548e84c513dc358996daddb9a030ef595ef032bbfb01fc42145  website.zip' | sha256sum --check
           unzip -q website.zip -d public
           test -s public/ja/index.html && test -s public/en/index.html
-      - name: Apply and test bilingual search
+      - name: Prepare the complete bilingual release
         run: |
           python qa/profile_name.py public
-          cp assets/search-engine.js public/assets/
           cp 404.html public/404.html
-          cp assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
-          mkdir -p "$RUNNER_TEMP/preview"
-          ln -s "$GITHUB_WORKSPACE/public" "$RUNNER_TEMP/preview/muroosystems-pages"
-          python -m http.server 8123 --directory "$RUNNER_TEMP/preview" > "$RUNNER_TEMP/preview.log" 2>&1 &
-          npm install --prefix "$RUNNER_TEMP/search-qa" playwright@1.56.1
-          cp qa/search-recovery.cjs "$RUNNER_TEMP/search-qa/"
-          node "$RUNNER_TEMP/search-qa/search-recovery.cjs"
+          cp assets/search-engine.js assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
           python qa/update-contact.py
           python qa/section_links.py public
           python qa/sitemap_languages.py public https://pal1126.github.io/muroosystems-pages
           python qa/prepare_print.py public https://pal1126.github.io/muroosystems-pages
           python -m pip install Pillow==13.0.0
           python qa/responsive_hero.py public
-          cp qa/home-hero.cjs "$RUNNER_TEMP/search-qa/"
-          node "$RUNNER_TEMP/search-qa/home-hero.cjs"
+          find public -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/release.sha256"
+      - name: Validate final package and browser journeys
+        run: |
           python qa/check-package.py
           command -v pdftotext || sudo apt-get install -y poppler-utils
-          cp qa/print-pages.cjs "$RUNNER_TEMP/search-qa/"
-          node "$RUNNER_TEMP/search-qa/print-pages.cjs"
-          cp qa/visitor-journeys.cjs "$RUNNER_TEMP/search-qa/"
-          node "$RUNNER_TEMP/search-qa/visitor-journeys.cjs"
+          mkdir -p "$RUNNER_TEMP/preview"
+          ln -s "$GITHUB_WORKSPACE/public" "$RUNNER_TEMP/preview/muroosystems-pages"
+          python -m http.server 8123 --directory "$RUNNER_TEMP/preview" > "$RUNNER_TEMP/preview.log" 2>&1 &
+          npm install --prefix "$RUNNER_TEMP/search-qa" playwright@1.56.1
+          for suite in search-recovery home-hero print-pages visitor-journeys; do
+            cp "qa/$suite.cjs" "$RUNNER_TEMP/search-qa/"
+            node "$RUNNER_TEMP/search-qa/$suite.cjs"
+          done
       - uses: actions/configure-pages@v5
+      - name: Confirm the upload matches the tested release
+        run: |
+          find public -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/upload.sha256"
+          diff -u "$RUNNER_TEMP/release.sha256" "$RUNNER_TEMP/upload.sha256"
+          echo "Verified $(wc -l < "$RUNNER_TEMP/upload.sha256") release files"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
