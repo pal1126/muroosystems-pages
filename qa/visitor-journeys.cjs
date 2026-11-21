@@ -12,8 +12,20 @@ const { chromium } = require('playwright');
         await plain.waitForURL(base + lang + '/company/#group');
         assert.equal(await plain.locator(':target').getAttribute('id'), 'group');
         const alternate = plain.locator('a[hreflang="' + other + '"]:visible').last();
-        await alternate.focus();
-        await plain.keyboard.press('Enter');
+        if (lang === 'ja') {
+          const point = await alternate.evaluate(link => {
+            link.scrollIntoView({block: 'center', behavior: 'instant'});
+            const box = link.getBoundingClientRect();
+            const x = box.left + box.width / 2;
+            const y = box.top + box.height / 2;
+            if (!link.contains(document.elementFromPoint(x, y))) throw Error('Language link is obscured');
+            return {x, y};
+          });
+          await plain.mouse.click(point.x, point.y);
+        } else {
+          await alternate.focus();
+          await plain.keyboard.press('Enter');
+        }
         await plain.waitForURL(base + other + '/company/');
         const contact = plain.locator('a[href="/muroosystems-pages/' + other + '/contact/"]:visible').last();
         await contact.focus();
