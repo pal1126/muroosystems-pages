@@ -83,6 +83,10 @@ const { chromium } = require('playwright');
         const markedURL = await marked.evaluate(el => el.closest('a').href);
         await marked.click();
         await page.waitForURL(markedURL);
+        await page.goto(url.replace('&category=products', '').replace('FREMES', 'ＮＵＫＥＭ'));
+        await marked.waitFor();
+        assert.equal(await marked.textContent(), 'NUKEM');
+        assert.equal(await query.inputValue(), 'ＮＵＫＥＭ');
         console.log(lang, width, 'passed');
       }
       await page.close();

@@ -63,13 +63,17 @@ function element(tag, text, className) {
   if (className) node.className=className;
   return node;
 }
+function foldAsciiWidth(value) {
+  return value.replace(/[！-～]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xfee0));
+}
+
 function highlightMatches(node, pattern) {
   if (!pattern) return;
   const original = node.textContent;
   const parts = document.createDocumentFragment();
   let offset = 0;
-  for (const match of original.matchAll(pattern)) {
-    parts.append(original.slice(offset, match.index), element('mark', match[0]));
+  for (const match of foldAsciiWidth(original).matchAll(pattern)) {
+    parts.append(original.slice(offset, match.index), element('mark', original.slice(match.index, match.index + match[0].length)));
     offset = match.index + match[0].length;
   }
   if (offset) {
@@ -80,9 +84,9 @@ function highlightMatches(node, pattern) {
 
 function render(start = 0) {
   if (!index) return;
-  const terms = searchText().trim().split(/\s+/).filter(Boolean).slice(0, 16)
+  const terms = foldAsciiWidth(searchText()).trim().split(/\s+/).filter(Boolean).slice(0, 16)
     .sort((a, b) => b.length - a.length)
-    .map(term => term.replace(/[.*+?^${()|[\]\\]/g, '\\  const limit = page'));
+    .map(term => term.replace(/[.*+?^$(){}|[\]\\]/g, char => '\\' + char));
   const pattern = terms.length ? new RegExp(terms.join('|'), 'giu') : null;
   const limit = page * pageSize;
   const fragment = document.createDocumentFragment();
