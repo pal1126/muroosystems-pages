@@ -123,3 +123,7 @@ jobs:
                   if response.status != 200:
                       raise SystemExit("Recovery destination unavailable")
           PY
+      - name: Verify published bilingual homepage images
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python qa/live-home-images.py
