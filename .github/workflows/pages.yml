@@ -6,6 +6,7 @@ on:
       - .github/workflows/pages.yml
       - assets/site-search*.js
       - 404.html
+      - assets/search-engine.js
       - assets/search-excerpts.js
       - qa/**
   workflow_dispatch:
@@ -36,6 +37,8 @@ jobs:
           test -s public/ja/index.html && test -s public/en/index.html
       - name: Apply and test bilingual search
         run: |
+          python qa/profile_name.py public
+          cp assets/search-engine.js public/assets/
           cp 404.html public/404.html
           cp assets/site-search{,-en}.js assets/search-excerpts.js public/assets/
           mkdir -p "$RUNNER_TEMP/preview"

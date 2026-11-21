@@ -130,6 +130,11 @@ const { chromium } = require('playwright');
         assert.match(await page.locator('.search-result-snippet').innerText(), /ｶﾞｽ設備/);
         assert.equal(await links.first().innerText(), 'NUKEM');
         await page.unroute(indexRoute);
+        const fullName = lang === 'ja' ? 'NUKEM Technologies  GmbH（NUKEM）' : 'NUKEM Technologies  GmbH (NUKEM)';
+        await page.goto(new URL('?q=' + encodeURIComponent(fullName), url).href);
+        await links.first().click();
+        await page.waitForURL('**/' + lang + '/company/#nukem-technologies');
+        assert.equal(await page.locator('#nukem-technologies .entity-name').textContent(), fullName);
         console.log(lang, width, 'passed');
       }
       await page.close();
