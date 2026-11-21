@@ -5,11 +5,13 @@ const { chromium } = require('playwright');
   try {
     for (const width of [390, 768, 1440]) {
       const page = await browser.newPage({viewport: {width, height: 900}});
+      page.setDefaultTimeout(10000);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       for (const lang of ['ja', 'en']) {
         const home = 'http://localhost:8123/muroosystems-pages/' + lang + '/';
         for (const route of ['business/', 'projects/', 'company/', 'contact/']) {
+          console.log('Checking', lang, route, width);
           await page.goto(home);
           const path = new URL(route, home).pathname;
           const entry = page.locator('a[href="' + path + '"]:visible').last();
