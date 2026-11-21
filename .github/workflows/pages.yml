@@ -5,7 +5,7 @@ on:
     paths:
       - .github/workflows/pages.yml
       - assets/site-search*.js
-      - qa/search-recovery.cjs
+      - qa/**
   workflow_dispatch:
 
 permissions:
@@ -40,6 +40,9 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/search-qa" playwright@1.56.1
           cp qa/search-recovery.cjs "$RUNNER_TEMP/search-qa/"
           node "$RUNNER_TEMP/search-qa/search-recovery.cjs"
+          python qa/check-package.py
+          cp qa/visitor-journeys.cjs "$RUNNER_TEMP/search-qa/"
+          node "$RUNNER_TEMP/search-qa/visitor-journeys.cjs"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
