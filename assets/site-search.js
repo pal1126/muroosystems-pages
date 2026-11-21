@@ -63,8 +63,27 @@ function element(tag, text, className) {
   if (className) node.className=className;
   return node;
 }
+function highlightMatches(node, pattern) {
+  if (!pattern) return;
+  const original = node.textContent;
+  const parts = document.createDocumentFragment();
+  let offset = 0;
+  for (const match of original.matchAll(pattern)) {
+    parts.append(original.slice(offset, match.index), element('mark', match[0]));
+    offset = match.index + match[0].length;
+  }
+  if (offset) {
+    parts.append(original.slice(offset));
+    node.replaceChildren(parts);
+  }
+}
+
 function render(start = 0) {
   if (!index) return;
+  const terms = searchText().trim().split(/\s+/).filter(Boolean).slice(0, 16)
+    .sort((a, b) => b.length - a.length)
+    .map(term => term.replace(/[.*+?^${()|[\]\\]/g, '\\  const limit = page'));
+  const pattern = terms.length ? new RegExp(terms.join('|'), 'giu') : null;
   const limit = page * pageSize;
   const fragment = document.createDocumentFragment();
   for (const row of matches.slice(start,limit)) {
@@ -72,7 +91,11 @@ function render(start = 0) {
     const meta=element('p',labels[row.category] + (row.prtimes ? ' · PR TIMES' : ''),'search-result-meta');
     if (row.date) {const time=element('time',row.date.slice(0,10));time.dateTime=row.date;meta.append(' · ',time);}
     const heading=element('h2'); const anchor=element('a',row.title);anchor.href=row.url;heading.append(anchor);
-    item.append(meta,heading,element('p',snippet(row),'search-result-snippet'));fragment.append(item);
+    const summary = element('p', snippet(row), 'search-result-snippet');
+    highlightMatches(anchor, pattern);
+    highlightMatches(summary, pattern);
+    item.append(meta, heading, summary);
+    fragment.append(item);
   }
   if (start) results.append(fragment);
   else results.replaceChildren(fragment);

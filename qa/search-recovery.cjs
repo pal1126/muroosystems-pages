@@ -76,6 +76,13 @@ const { chromium } = require('playwright');
         assert.equal(await page.locator('#site-category').inputValue(), 'products');
         assert.equal(attempts, 3);
         await page.unroute(indexRoute);
+        await page.goto(url.replace('&category=products', '').replace('FREMES', 'nukem'));
+        const marked = page.locator('#site-search-results h2 a mark').first();
+        await marked.waitFor();
+        assert.equal((await marked.textContent()).toLowerCase(), 'nukem');
+        const markedURL = await marked.evaluate(el => el.closest('a').href);
+        await marked.click();
+        await page.waitForURL(markedURL);
         console.log(lang, width, 'passed');
       }
       await page.close();
