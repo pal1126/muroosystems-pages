@@ -15,9 +15,14 @@ class Head(HTMLParser):
         super().__init__()
         self.remove = []
         self.excluded = False
+        self.metadata = {}
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if tag == "meta":
+            key = a.get("property") or a.get("name")
+            if key:
+                self.metadata[key] = a.get("content", "")
         rel = a.get("rel", "").lower().split()
         if tag == "link" and ("canonical" in rel or ("alternate" in rel and a.get("hreflang") in {"ja", "en", "x-default"})):
             self.remove.append(self.get_starttag_text())
@@ -56,6 +61,18 @@ def publish(root, base):
         for original in parsed.remove:
             head = head.replace(original, "", 1)
         links = [f'<link rel="canonical" href="{escape(base + route)}">']
+        meta = parsed.metadata
+        if not meta.get("og:title") or not meta.get("og:description") or meta.get("og:url") != base + route:
+            raise ValueError(f"Incomplete sharing metadata: {route}")
+        alternate = "en_GB" if route.startswith("ja/") else "ja_JP"
+        if "og:locale:alternate" not in meta:
+            links.append(f'<meta property="og:locale:alternate" content="{alternate}">')
+        image = meta.get("og:image") or base + "assets/muroo.png"
+        alt = meta.get("og:image:alt") or "Muroosystems Corporation"
+        for attr, key, value in (("property", "og:image", image), ("property", "og:image:alt", alt),
+                                  ("name", "twitter:image", image), ("name", "twitter:image:alt", alt)):
+            if not meta.get(key):
+                links.append(f'<meta {attr}="{key}" content="{escape(value)}">')
         for child in entry.findall(f"{{{XHTML}}}link"):
             entry.remove(child)
         for lang, other in variants.items():

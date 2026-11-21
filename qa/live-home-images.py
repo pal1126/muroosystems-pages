@@ -51,3 +51,30 @@ for url in sorted(assets):
         if response.headers.get_content_type() != mime or sha256(data).digest() != sha256(path.read_bytes()).digest():
             raise ValueError(f"Published image differs: {url}")
     print("Live image verified", path.name, len(data))
+
+
+class Sharing(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.meta = {}
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "meta":
+            a = dict(attrs)
+            self.meta[a.get("property") or a.get("name")] = a.get("content")
+
+
+for lang, alternate in (("ja", "en_GB"), ("en", "ja_JP")):
+    for route in ("company", "projects"):
+        url = f"{base}{lang}/{route}/"
+        parser = Sharing()
+        with urlopen(url, timeout=30) as response:
+            parser.feed(response.read().decode())
+        meta = parser.meta
+        assert meta["og:url"] == url and meta["og:locale:alternate"] == alternate
+        assert meta["og:title"] and meta["og:description"]
+        assert meta["og:image"] == meta["twitter:image"] == base + "assets/muroo.png"
+        print("Live sharing metadata verified", url)
+with urlopen(base + "assets/muroo.png", timeout=30) as response:
+    assert response.headers.get_content_type() == "image/png"
+    assert response.read() == Path("public/assets/muroo.png").read_bytes()
