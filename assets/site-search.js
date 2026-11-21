@@ -1,4 +1,4 @@
-import {prepareIndex, searchIndex, normalize} from './search-engine.js';
+import {prepareIndex, searchIndex, queryTerms} from './search-engine.js';
 import {excerpt, highlight} from './search-excerpts.js';
 
 const form = document.getElementById('site-search-form');
@@ -66,7 +66,7 @@ function element(tag, text, className) {
 }
 function render(start = 0) {
   if (!index) return;
-  const terms = normalize(searchText()).split(' ').filter(Boolean).slice(0, 16);
+  const terms = queryTerms(searchText());
   const escaped = terms.slice()
     .sort((a, b) => b.length - a.length)
     .map(term => term.replace(/[.*+?^$(){}|[\]\\]/g, char => '\\' + char));

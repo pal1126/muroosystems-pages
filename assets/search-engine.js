@@ -13,9 +13,14 @@ const companyNames = new Set([
   'ntes', 'nukemtechnologiesengineeringservicesgmbh', 'nukemtechnologiesengineeringservicesgmbh(ntes)',
 ]);
 
+export function queryTerms(query) {
+  const words = normalize(query).split(' ').filter(Boolean).slice(0, 16);
+  return words.map(word => word === 'ntes' ? 'nukem' : word);
+}
+
 export function searchIndex(rows, query = '', category = '') {
   const companyQuery = companyNames.has(compact(query));
-  const terms = normalize(query).split(' ').filter(Boolean).slice(0, 16);
+  const terms = queryTerms(query);
   return rows.filter(row => !category || (category === 'prtimes' ? row.prtimes : row.category === category))
     .map(row => {
       let score = row.route.startsWith('archive/') ? 0 : 8;

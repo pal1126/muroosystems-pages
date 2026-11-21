@@ -143,6 +143,12 @@ const { chromium } = require('playwright');
           await first.click();
           await page.waitForURL('**/' + lang + '/company/#nukem-technologies');
         }
+        await page.goto(new URL('?q=' + encodeURIComponent('ＮＴＥＳ FREMES'), url).href);
+        await links.first().waitFor();
+        assert.equal(await query.inputValue(), 'ＮＴＥＳ FREMES');
+        assert.match(await links.first().getAttribute('href'), /\/fremes\/$/);
+        await links.first().click();
+        await page.waitForURL('**/' + lang + '/fremes/');
         console.log(lang, width, 'passed');
       }
       await page.close();
