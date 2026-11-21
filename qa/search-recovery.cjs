@@ -89,6 +89,22 @@ const { chromium } = require('playwright');
         await marked.waitFor();
         assert.equal(await marked.textContent(), 'NUKEM');
         assert.equal(await query.inputValue(), 'ＮＵＫＥＭ');
+        const news = new URL(url);
+        news.search = '?category=news';
+        await page.goto(news.href);
+        await links.first().waitFor();
+        const showMore = page.locator('#site-search-more');
+        const totalNews = Number((await page.locator('#site-category option[value="news"]').textContent()).match(/\((\d+)\)$/)[1]);
+        let shown = await links.count();
+        assert.equal(shown, 12);
+        while (shown < totalNews) {
+          const next = Math.min(12, totalNews - shown);
+          assert.match(await showMore.innerText(), new RegExp(String(next)));
+          await showMore.click();
+          shown += next;
+          assert.equal(await links.count(), shown);
+        }
+        assert.equal(await showMore.isHidden(), true);
         console.log(lang, width, 'passed');
       }
       await page.close();

@@ -104,7 +104,12 @@ function render(start = 0) {
   if (start) results.append(fragment);
   else results.replaceChildren(fragment);
   empty.hidden=matches.length>0;
-  more.hidden=matches.length<=limit;
+  const remaining = Math.max(0, matches.length - limit);
+  more.hidden = remaining === 0;
+  if (remaining) {
+    const nextCount = Math.min(pageSize, remaining);
+    more.textContent = `次の${nextCount}件を表示`;
+  }
   status.textContent=`${matches.length}件${matches.length ? `（${Math.min(matches.length,limit)}件を表示）` : ''}`;
 }
 const recovery = element('button');

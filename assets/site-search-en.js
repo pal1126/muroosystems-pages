@@ -104,7 +104,12 @@ function render(start = 0) {
   if (start) results.append(fragment);
   else results.replaceChildren(fragment);
   empty.hidden=matches.length>0;
-  more.hidden=matches.length<=limit;
+  const remaining = Math.max(0, matches.length - limit);
+  more.hidden = remaining === 0;
+  if (remaining) {
+    const nextCount = Math.min(pageSize, remaining);
+    more.textContent = `Show ${nextCount} more ${nextCount === 1 ? "result" : "results"}`;
+  }
   status.textContent=`${matches.length} results${matches.length ? ` (${Math.min(matches.length,limit)} shown)` : ''}`;
 }
 const recovery = element('button');
